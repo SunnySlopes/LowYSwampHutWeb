@@ -28,7 +28,8 @@
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File serve.ps1
-# http://127.0.0.1:8080/
+# 启动成功后自动打开 http://127.0.0.1:8080/
+# 只启动服务器、不打开浏览器：powershell -ExecutionPolicy Bypass -File serve.ps1 -NoOpen
 ```
 
 ### macOS / Linux
@@ -40,10 +41,10 @@ powershell -ExecutionPolicy Bypass -File serve.ps1
 chmod +x open.sh
 ./open.sh
 
-# 方式二：本地服务器（HTTP，启用多线程）
+# 方式二：本地服务器（HTTP，启用多线程，启动成功后自动打开浏览器）
 chmod +x serve.sh
 ./serve.sh
-# http://127.0.0.1:8080/
+# 不自动打开：NO_OPEN=1 ./serve.sh
 ```
 
 也可以直接双击/打开 `index.html`，或用 `python3 -m http.server 8080 --bind 127.0.0.1`。
@@ -122,6 +123,8 @@ chmod +x serve.sh
 ### 网页版限制
 
 - 单种子大范围：HTTP 下自动多线程；`file://` 下为单线程。
+- 如果浏览器无法提供 CPU 核心数，或 Worker 创建/加载失败，页面会自动回退到
+  主线程单线程继续搜索，不弹错误框；线程字段会显示回退原因。
 - 种子列表模式目前按种子顺序逐个扫描（默认 256，单个种子很快）；
   世界边界 × 大量种子会非常久，建议列表模式保持 256 或 64。
 - 低 Y 女巫小屋非常稀有。默认范围没有结果很正常，可以换种子或扩大范围。
@@ -171,8 +174,8 @@ LowYSwampHutWeb/
 │  └─ fetch_emsdk_zip.py   # 可选：并行下载 Emscripten 档案
 ├─ examples/seeds.txt      # 示例种子列表
 ├─ assets/                 # 页面预览图
-├─ serve.ps1 / serve.bat   # Windows 本地服务器
-├─ serve.sh                # macOS / Linux 本地服务器
+├─ serve.ps1 / serve.bat   # Windows 本地服务器（启动成功后自动打开页面）
+├─ serve.sh                # macOS / Linux 本地服务器（启动成功后自动打开浏览器）
 ├─ open.bat / open.sh      # 打开页面
 ├─ LICENSE                 # MIT（原作者 M33Galaxy / SunnySlopes）
 └─ README.md

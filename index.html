@@ -684,7 +684,7 @@
       </details>
       <details class="faq-item">
         <summary><span data-i18n="faq.q3">线程数是怎么自动工作的？</span><span class="faq-plus"></span></summary>
-        <div class="faq-body" data-i18n="faq.a3">HTTP 下页面会启动最多 12 个 Web Worker（移动端最多 4 个），每个 Worker 持有自己的 WASM 实例并扫描一段 Z 范围，因此不需要 SharedArrayBuffer / COOP-COEP。file:// 下无法启动这种 Worker，自动回退单线程；用 serve.ps1 / serve.sh 打开即可多线程。</div>
+        <div class="faq-body" data-i18n="faq.a3">HTTP 下页面会启动最多 12 个 Web Worker（移动端最多 4 个），每个 Worker 持有自己的 WASM 实例并扫描一段 Z 范围，因此不需要 SharedArrayBuffer / COOP-COEP。file:// 下无法启动这种 Worker，自动回退单线程；用 serve.ps1 / serve.sh 打开即可多线程。如果浏览器无法提供 CPU 核心数，或 Worker 创建/加载失败，也会自动回退单线程，不弹错误框。</div>
       </details>
       <details class="faq-item">
         <summary><span data-i18n="faq.q4">找不到小屋是正常的吗？</span><span class="faq-plus"></span></summary>

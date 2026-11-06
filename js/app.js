@@ -80,6 +80,7 @@
     pool: null,
     parallel: false,
     workerCount: 1,
+    threadFallback: false,
     seen: new Set(),
     lastPaint: 0,
     overflowWarned: false
@@ -251,7 +252,7 @@
           if (settled) return;
           settled = true;
           reject(new Error('worker init timeout'));
-        }, 30000);
+        }, 15000);
         const finish = (ok, err) => {
           if (settled) return;
           settled = true;
@@ -277,6 +278,7 @@
               if (remaining === 0) finish(true);
             } else {
               this.handle(i, msg);
+              if (msg.type === 'error') finish(false, this.error);
             }
           };
           w.onerror = (ev) => {
@@ -288,6 +290,7 @@
           w.onmessageerror = () => {
             this.error = new Error('worker message error');
             this.terminate();
+            finish(false, this.error);
             this.resolveDoneOnce();
           };
           w.postMessage({ type: 'init' });
@@ -523,32 +526,51 @@
 
   /** Number of independent WebAssembly workers for a single-seed search.
    *  file:// cannot start workers in Chrome; HTTP(S) can use CPU cores. */
+  function cpuCores() {
+    try {
+      const n = Number(navigator.hardwareConcurrency);
+      return Number.isFinite(n) && n >= 1 ? Math.floor(n) : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
   function workerCount() {
     if (location.protocol === 'file:') return 1;
     if (typeof Worker === 'undefined') return 1;
-    const cores = navigator.hardwareConcurrency || 4;
-    const small = window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
-    const mem = navigator.deviceMemory || (small ? 4 : 8);
+    const cores = cpuCores();
+    if (!cores) return 1;
+    const small = !!(window.matchMedia && window.matchMedia('(max-width: 900px)').matches);
+    const mem = Number(navigator.deviceMemory);
     const maxByMode = small ? 4 : 12;
-    const byMem = mem >= 8 ? 12 : (mem >= 4 ? 4 : 2);
+    const byMem = Number.isFinite(mem) && mem > 0
+      ? (mem >= 8 ? 12 : (mem >= 4 ? 4 : 2))
+      : (small ? 4 : 8);
     return Math.max(1, Math.min(maxByMode, cores, byMem));
+  }
+
+  function threadHintKey(n) {
+    if (n > 1) return 'hint.threadsAuto';
+    if (state.threadFallback) return 'hint.threadsFallback';
+    if (location.protocol === 'file:') return 'hint.threadsSingle';
+    if (typeof Worker === 'undefined') return 'hint.threadsFallback';
+    if (!cpuCores()) return 'hint.threadsUnknown';
+    return 'hint.threadsOneCore';
   }
 
   function syncThreadHint() {
     const n = state.workerCount || 1;
+    const key = threadHintKey(n);
+    const hint = key === 'hint.threadsAuto' ? t(key, { n: n }) : t(key);
     const sThreads = $('sThreads');
     const lThreads = $('lThreads');
     if (sThreads) sThreads.value = String(n);
     if (lThreads) lThreads.value = '1';
     const sHint = $('sThreadHint');
-    if (sHint) sHint.textContent = n > 1
-      ? t('hint.threadsAuto', { n: n })
-      : t('hint.threadsSingle');
+    if (sHint) sHint.textContent = hint;
     const lHint = $('lThreadHint');
     if (lHint) lHint.textContent = t('hint.threadsList');
-    if (sThreads) sThreads.title = n > 1
-      ? t('hint.threadsAuto', { n: n })
-      : t('hint.threadsSingle');
+    if (sThreads) sThreads.title = hint;
   }
 
   function tryReadRange(prefix) {
@@ -1150,6 +1172,16 @@
     }
   }
 
+  /** Switch the current single-seed search to the main-thread engine. */
+  function prepareSingleThreadFallback() {
+    state.threadFallback = true;
+    state.workerCount = 1;
+    state.parallel = false;
+    state.rate = INITIAL_RATE;
+    syncThreadHint();
+    updateRangeSummaries();
+  }
+
   /** Single-seed search split across Web Workers, each with its own WASM
    *  instance. Used for large ranges when the page is served over HTTP(S). */
   async function runSingleParallel(seed, cfg, count) {
@@ -1164,9 +1196,12 @@
     state.pool = pool;
     let processed = 0;
     let lastPaint = 0;
+    let initialized = false;
+    let scanStarted = false;
 
     try {
       await pool.init();
+      initialized = true;
 
       if (state.stopRequested) {
         pool.terminate();
@@ -1174,6 +1209,8 @@
         finishSearch(mode, 'stopped');
         return;
       }
+
+      if (pool.error) throw pool.error;
 
       p.phase = 'running';
       p.statusKey = 'status.running';
@@ -1216,6 +1253,7 @@
           console.error('[lysh] scanner worker error:', err);
         }
       });
+      scanStarted = true;
 
       await pool.waitDone();
       pool.terminate();
@@ -1224,6 +1262,12 @@
       if (state.stopRequested) {
         finishSearch(mode, 'stopped');
       } else if (pool.error) {
+        if (processed === 0 && !state.stopRequested) {
+          prepareSingleThreadFallback();
+          console.warn('[lysh] worker failed before progress; falling back to single thread.', pool.error);
+          await runSingle(seed, cfg);
+          return;
+        }
         finishSearch(mode, 'error', { error: pool.error });
       } else {
         p.percent = 100;
@@ -1232,9 +1276,25 @@
         finishSearch(mode, 'completed', { elapsed: p.elapsedMs });
       }
     } catch (err) {
-      console.error('[lysh] parallel search failed:', err);
       pool.terminate();
       state.pool = null;
+
+      if (state.stopRequested) {
+        finishSearch(mode, 'stopped');
+        return;
+      }
+
+      if (!initialized || !scanStarted) {
+        // Worker creation, module load or scan startup failed: keep the
+        // search usable by continuing on the main thread. The thread hint
+        // explains the fallback; no error dialog is shown.
+        prepareSingleThreadFallback();
+        console.warn('[lysh] worker startup failed; falling back to single thread.', err);
+        await runSingle(seed, cfg);
+        return;
+      }
+
+      console.error('[lysh] parallel search failed:', err);
       finishSearch(mode, 'error', { error: err });
     }
   }
