@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#07130f">
+<title>低 Y 女巫小屋搜索 · WebAssembly 版</title>
+<meta name="description" content="在浏览器里使用 WebAssembly 搜索 Minecraft Java 版低 Y 坐标女巫小屋。支持 1.18 ~ 26.3、普通 / 巨型 / 单群系世界，种子不上传，完全本地计算。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b1f18'/%3E%3Cpath d='M12 34 32 16l20 18' fill='none' stroke='%233ddc97' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M20 33v15h24V33' fill='none' stroke='%238ef0c0' stroke-width='4' stroke-linejoin='round'/%3E%3Ccircle cx='32' cy='40' r='3.5' fill='%23f6c66a'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<noscript>
+  <div class="noscript-banner">
+    此页面需要启用 JavaScript 与 WebAssembly。<br>
+    This page requires JavaScript and WebAssembly.
+  </div>
+</noscript>
+
+<!-- SVG icon sprite -->
+<svg class="sprite" aria-hidden="true">
+  <defs>
+    <symbol id="i-hut" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 10.5V20h13v-9.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 20v-5h4v5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 20v3M16 20v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L9.5 22 19 10h-6.5L13 2Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10" width="15" height="10.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="15.2" r="1.5" fill="currentColor"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-cube" viewBox="0 0 24 24"><path d="M12 2.8 21 7.6v8.8l-9 4.8-9-4.8V7.6l9-4.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M3 7.6 12 12.4l9-4.8M12 12.4V21" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 12h18M12 3c2.5 2.4 3.8 5.4 3.8 9S14.5 18.6 12 21c-2.5-2.4-3.8-5.4-3.8-9S9.5 5.4 12 3Z" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 15.5h-1a1.5 1.5 0 0 1-1.5-1.5V4.8A1.8 1.8 0 0 1 4.8 3h8.4A1.8 1.8 0 0 1 15 4.8v.7" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v11m0 0 4.2-4.2M12 14l-4.2-4.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+    <symbol id="i-sort" viewBox="0 0 24 24"><path d="M7 4v16m0 0-3.2-3.2M7 20l3.2-3.2M17 20V4m0 0-3.2 3.2M17 4l3.2 3.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9.5 7V4.8h5V7M6.2 7l1 12.2a1.8 1.8 0 0 0 1.8 1.6h6a1.8 1.8 0 0 0 1.8-1.6L18 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 4.8 19 12 8 19.2V4.8Z" fill="currentColor"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6.5" y="4.5" width="4" height="15" rx="1.3" fill="currentColor"/><rect x="13.5" y="4.5" width="4" height="15" rx="1.3" fill="currentColor"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="5.5" y="5.5" width="13" height="13" rx="2.4" fill="currentColor"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4.5 9.5A8 8 0 1 1 4 14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M4.5 4.5v5h5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.2A8.5 8.5 0 0 1 9.8 4a8.5 8.5 0 1 0 10.2 10.2Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-lang" viewBox="0 0 24 24"><path d="M3.5 5.5h9M8 3.5v2M10.5 5.5c-.6 4.3-3 7.5-6.5 9.5M6 9.5c1.2 2.8 3.2 4.7 5.8 5.7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="m13 20 3.8-9 3.8 9M14.4 17h4.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3.5h7l5 5V20a1.8 1.8 0 0 1-1.8 1.8H6A1.8 1.8 0 0 1 4.2 20V5.3A1.8 1.8 0 0 1 6 3.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M13 3.8V9h4.8M8 13h8M8 16.5h5.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m0 0-5.5-5.5M19 12l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m4.5 12.5 5 5 10-11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 10.5V17M12 7.4v.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3.6 22 20.4H2L12 3.6Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 9.2v4.6M12 17.2v.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<div class="page-bg" aria-hidden="true">
+  <div class="bg-glow bg-glow-a"></div>
+  <div class="bg-glow bg-glow-b"></div>
+  <div class="bg-grid"></div>
+  <div class="bg-mist"></div>
+</div>
+
+<header class="site-header">
+  <div class="shell header-inner">
+    <a class="brand" href="#top" aria-label="Low-Y Swamp Hut">
+      <span class="brand-mark"><svg class="icon"><use href="#i-hut"></use></svg></span>
+      <span class="brand-text">
+        <strong data-i18n="brand.name">低 Y 女巫小屋</strong>
+        <small data-i18n="brand.tag">Low-Y Swamp Hut · Web</small>
+      </span>
+    </a>
+    <nav class="site-nav" aria-label="主导航">
+      <a href="#search" data-i18n="nav.search">开始搜索</a>
+      <a href="#features" data-i18n="nav.features">功能</a>
+      <a href="#how" data-i18n="nav.how">原理</a>
+      <a href="#faq" data-i18n="nav.faq">常见问题</a>
+    </nav>
+    <div class="header-actions">
+      <span class="engine-pill" id="engineBadge" title="WebAssembly 引擎状态">
+        <span class="dot" id="engineDot"></span>
+        <span id="engineText">引擎加载中</span>
+      </span>
+      <button class="icon-btn" id="langToggle" type="button" title="切换语言 / Switch language" aria-label="切换语言">
+        <svg class="icon"><use href="#i-lang"></use></svg>
+        <span class="lang-label" id="langLabel">EN</span>
+      </button>
+      <button class="icon-btn" id="themeToggle" type="button" title="切换主题 / Toggle theme" aria-label="切换主题">
+        <svg class="icon icon-sun"><use href="#i-sun"></use></svg>
+        <svg class="icon icon-moon"><use href="#i-moon"></use></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============================ HERO ============================ -->
+  <section class="hero shell">
+    <div class="hero-copy">
+      <span class="eyebrow"><span class="live-dot"></span><span data-i18n="hero.eyebrow">MINECRAFT JAVA EDITION · WEBASSEMBLY</span></span>
+      <h1>
+        <span data-i18n="hero.title1">在浏览器里，</span><br>
+        <span class="grad-text" data-i18n="hero.title2">找到最低的女巫小屋</span>
+      </h1>
+      <p class="lede" data-i18n="hero.lede">
+        完整移植自 LowYSwampHut 的 C 内核，通过 WebAssembly 在你的设备上本地计算。不需要安装 Java，不需要上传种子 —— 打开网页就能开始。
+      </p>
+      <div class="hero-cta">
+        <a class="btn primary lg" href="#search">
+          <svg class="icon"><use href="#i-search"></use></svg>
+          <span data-i18n="hero.ctaPrimary">开始搜索</span>
+        </a>
+        <a class="btn ghost lg" href="#how">
+          <span data-i18n="hero.ctaSecondary">它如何工作</span>
+          <svg class="icon"><use href="#i-arrow"></use></svg>
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><strong>1.18 – 26.3</strong><span data-i18n="hero.stat1">版本支持</span></div>
+        <div class="stat"><strong>3</strong><span data-i18n="hero.stat2">世界类型</span></div>
+        <div class="stat"><strong>100%</strong><span data-i18n="hero.stat3">本地计算</span></div>
+      </div>
+    </div>
+
+    <div class="hero-visual" aria-hidden="true">
+      <div class="terminal-card">
+        <div class="terminal-bar">
+          <span class="tl-dots"><i></i><i></i><i></i></span>
+          <span class="terminal-title">Low Y Swamp Hut</span>
+          <span class="terminal-live"><span class="live-dot"></span>LIVE</span>
+        </div>
+        <div class="scene-wrap">
+          <img class="swamp-scene" src="assets/low-y-swamp-hut.webp" alt="低 Y 女巫小屋（岩浆洞穴展示图）" width="1600" height="900" decoding="async">
+          <span class="scene-vignette"></span>
+        </div>
+        <div class="terminal-result">
+          <span class="prompt">/tp</span>
+          <span class="coord">20082832</span>
+          <span class="coord y">-54</span>
+          <span class="coord">4744416</span>
+          <span class="result-spacer"></span>
+          <span class="result-badge">Y ≤ -40</span>
+        </div>
+        <div class="terminal-meta">
+          <span><i class="meta-dot"></i>seed <code>-1024459017</code></span>
+          <span>26.2 ~ 26.3</span>
+        </div>
+      </div>
+      <div class="float-chip chip-a"><svg class="icon"><use href="#i-bolt"></use></svg><span>WASM · 本地</span></div>
+      <div class="float-chip chip-b"><span class="chip-k">Y</span><strong>-54</strong></div>
+    </div>
+  </section>
+
+<!-- APP_SECTION_START -->
+  <!-- ============================ APP ============================ -->
+  <section class="section shell" id="search">
+    <div class="section-head compact">
+      <span class="eyebrow" data-i18n="app.eyebrow">搜索控制台</span>
+      <h2 data-i18n="app.title">开始寻找你的低 Y 女巫小屋</h2>
+      <p data-i18n="app.sub">单种子默认世界边界（HTTP 下自动多线程），种子列表默认 256；file:// 下为单线程，建议用 serve 启动以启用多线程。</p>
+    </div>
+
+    <div class="app-shell">
+      <div class="app-topbar">
+        <div class="app-tabs" role="tablist" aria-label="搜索模式">
+          <button class="tab active" id="tab-single" data-tab="single" role="tab" aria-selected="true" aria-controls="panel-single">
+            <svg class="icon"><use href="#i-search"></use></svg>
+            <span data-i18n="tab.single">单种子搜索</span>
+          </button>
+          <button class="tab" id="tab-list" data-tab="list" role="tab" aria-selected="false" aria-controls="panel-list">
+            <svg class="icon"><use href="#i-file"></use></svg>
+            <span data-i18n="tab.list">从种子列表搜索</span>
+          </button>
+        </div>
+        <div class="app-topbar-right">
+          <span class="wasm-chip"><svg class="icon"><use href="#i-bolt"></use></svg>WASM</span>
+          <span class="muted small" id="engineVersion">–</span>
+        </div>
+      </div>
+
+      <div class="app-grid">
+        <div class="control-panel">
+
+          <!-- ==================== SINGLE ==================== -->
+          <div class="tab-panel" id="panel-single" role="tabpanel" aria-labelledby="tab-single">
+            <div class="panel-scroll">
+            <div class="console-form">
+              <section class="panel-section">
+                <div class="panel-title"><span class="num">01</span><span data-i18n="panel.target">搜索目标</span></div>
+
+                <div class="form-row">
+                  <label class="form-label" for="sSeed"><span data-i18n="label.seed">种子 Seed</span></label>
+                  <div class="form-control">
+                    <div class="input-row">
+                      <input id="sSeed" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="-1024459017" value="-1024459017">
+                      <button class="icon-btn" id="sRandom" type="button" title="随机种子" aria-label="随机种子">
+                        <svg class="icon"><use href="#i-bolt"></use></svg>
+                      </button>
+                      <button class="mini-btn" id="sDemo" type="button" data-i18n="btn.demo">示例</button>
+                    </div>
+                    <span class="field-error" id="sSeedError"></span>
+                    <span class="hint hint-optional" data-i18n="hint.seed">支持 -2^63 ~ 2^63-1 的整数</span>
+                  </div>
+                  <span class="form-aside"></span>
+                </div>
+
+                <div class="form-row thread-row">
+                  <label class="form-label" for="sThreads"><span data-i18n="label.threads">线程数</span> <span class="tag">WASM</span></label>
+                  <div class="form-control"><input id="sThreads" type="text" value="1" readonly tabindex="-1"></div>
+                  <span class="form-aside" id="sThreadHint">自动检测线程</span>
+                </div>
+              </section>
+
+              <section class="panel-section">
+                <div class="panel-title"><span class="num">02</span><span data-i18n="panel.world">世界参数</span></div>
+
+                <div class="form-row">
+                  <label class="form-label" for="sHeight"><span data-i18n="label.height">筛选小屋高度</span></label>
+                  <div class="form-control">
+                    <select id="sHeight">
+                      <option value="-40" selected>Y ≤ -40</option>
+                      <option value="-50">Y ≤ -50</option>
+                      <option value="-54">Y ≤ -54</option>
+                    </select>
+                  </div>
+                  <span class="form-aside" data-i18n="hint.heightShort">只保留 -40 及以下</span>
+                </div>
+
+                <div class="form-row">
+                  <label class="form-label" for="sVersion"><span data-i18n="label.version">版本</span></label>
+                  <div class="form-control">
+                    <select id="sVersion">
+                      <option value="26.2">26.2 ~ 26.3</option>
+                      <option value="1.19">1.19.x ~ 26.1</option>
+                      <option value="1.18">1.18.x</option>
+                    </select>
+                  </div>
+                  <span class="form-aside"></span>
+                </div>
+
+                <div class="form-row">
+                  <label class="form-label" for="sPreset"><span data-i18n="label.preset">世界类型</span></label>
+                  <div class="form-control">
+                    <select id="sPreset">
+                      <option value="normal" data-i18n="preset.normal">普通世界</option>
+                      <option value="large" data-i18n="preset.large">巨型生物群系</option>
+                      <option value="single" data-i18n="preset.single">单群系（沼泽）</option>
+                    </select>
+                  </div>
+                  <span class="form-aside"></span>
+                </div>
+              </section>
+
+              <section class="panel-section">
+                <div class="panel-title">
+                  <span class="num">03</span><span data-i18n="panel.range">搜索范围</span>
+                  <span class="range-summary" id="sRangeSummary">–</span>
+                </div>
+
+                <div class="preset-row" id="sPresets" role="group" aria-label="范围预设">
+                  <button type="button" class="preset-btn" data-mode="single" data-side="64">64</button>
+                  <button type="button" class="preset-btn" data-mode="single" data-side="256">256</button>
+                  <button type="button" class="preset-btn active" data-mode="single" data-side="117188" data-i18n="preset.world">世界边界</button>
+                </div>
+
+                <div class="bounds-rows" id="sBounds">
+                  <div class="form-row">
+                    <label class="form-label" for="sMinX">MinX <em>x512</em></label>
+                    <div class="form-control"><input id="sMinX" type="text" inputmode="numeric" value="-58594"></div>
+                    <span class="form-aside block-hint" id="sMinXBlocks">= -30,000,128 方块</span>
+                  </div>
+                  <div class="form-row">
+                    <label class="form-label" for="sMaxX">MaxX <em>x512</em></label>
+                    <div class="form-control"><input id="sMaxX" type="text" inputmode="numeric" value="58593"></div>
+                    <span class="form-aside block-hint" id="sMaxXBlocks">= 29,999,616 方块</span>
+                  </div>
+                  <div class="form-row">
+                    <label class="form-label" for="sMinZ">MinZ <em>x512</em></label>
+                    <div class="form-control"><input id="sMinZ" type="text" inputmode="numeric" value="-58594"></div>
+                    <span class="form-aside block-hint" id="sMinZBlocks">= -30,000,128 方块</span>
+                  </div>
+                  <div class="form-row">
+                    <label class="form-label" for="sMaxZ">MaxZ <em>x512</em></label>
+                    <div class="form-control"><input id="sMaxZ" type="text" inputmode="numeric" value="58593"></div>
+                    <span class="form-aside block-hint" id="sMaxZBlocks">= 29,999,616 方块</span>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <label class="form-label" for="sSide"><span data-i18n="label.side">正方形边长</span> <em>x512</em></label>
+                  <div class="form-control square-control">
+                    <label class="check-row">
+                      <input type="checkbox" id="sSquareMode" checked>
+                      <span data-i18n="label.squareMode">以 (0,0) 为中心</span>
+                    </label>
+                    <div class="side-input-row">
+                      <input id="sSide" type="text" inputmode="numeric" value="117188">
+                      <span class="hint block-hint" id="sSideBlocks">= 60,000,256 方块</span>
+                    </div>
+                  </div>
+                  <span class="form-aside" data-i18n="hint.square">取消勾选可手动填写 Min/Max</span>
+                </div>
+              </section>
+            </div>
+            </div>
+
+            <div class="action-row">
+              <button class="btn primary" id="sStart" type="button">
+                <svg class="icon"><use href="#i-play"></use></svg><span data-i18n="btn.start">开始搜索</span>
+              </button>
+              <button class="btn amber" id="sPause" type="button" disabled>
+                <svg class="icon"><use href="#i-pause"></use></svg><span data-i18n="btn.pause">暂停</span>
+              </button>
+              <button class="btn danger" id="sStop" type="button" disabled>
+                <svg class="icon"><use href="#i-stop"></use></svg><span data-i18n="btn.stop">停止</span>
+              </button>
+              <button class="btn ghost" id="sReset" type="button" title="重置搜索区域 / Reset search range">
+                <svg class="icon"><use href="#i-reset"></use></svg><span data-i18n="btn.reset">重置</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- ==================== LIST ==================== -->
+          <div class="tab-panel hidden" id="panel-list" role="tabpanel" aria-labelledby="tab-list">
+            <div class="panel-scroll">
+            <div class="console-form">
+              <section class="panel-section">
+                <div class="panel-title"><span class="num">01</span><span data-i18n="panel.seedFile">种子列表</span></div>
+
+                <div class="form-row wide">
+                  <span class="form-label" data-i18n="label.seedFile">种子文件</span>
+                  <div class="form-control">
+                    <div class="dropzone compact" id="lDropzone" tabindex="0" role="button" aria-label="选择种子文件">
+                      <input type="file" id="lFileInput" accept=".txt,.csv,text/plain" hidden>
+                      <svg class="icon drop-icon"><use href="#i-file"></use></svg>
+                      <strong id="lDropTitle" data-i18n="drop.title">拖入种子文件，或点击选择</strong>
+                      <span class="hint" id="lDropHint" data-i18n="drop.hint">纯文本，每行一个种子；空行与 # 开头的行会被忽略</span>
+                      <span class="file-pill hidden" id="lFileInfo">
+                        <svg class="icon"><use href="#i-check"></use></svg>
+                        <span id="lFileName">–</span>
+                        <span class="file-count" id="lSeedCount">0</span>
+                      </span>
+                    </div>
+                    <span class="field-error" id="lFileError"></span>
+                  </div>
+                  <span class="form-aside"></span>
+                </div>
+
+                <div class="form-row thread-row">
+                  <label class="form-label" for="lThreads"><span data-i18n="label.threads">线程数</span> <span class="tag">WASM</span></label>
+                  <div class="form-control"><input id="lThreads" type="text" value="1" readonly tabindex="-1"></div>
+                  <span class="form-aside" id="lThreadHint">列表模式逐个种子扫描</span>
+                </div>
+              </section>
+
+              <section class="panel-section">
+                <div class="panel-title"><span class="num">02</span><span data-i18n="panel.world">世界参数</span></div>
+
+                <div class="form-row">
+                  <label class="form-label" for="lHeight"><span data-i18n="label.height">筛选小屋高度</span></label>
+                  <div class="form-control">
+                    <select id="lHeight">
+                      <option value="-40" selected>Y ≤ -40</option>
+                      <option value="-50">Y ≤ -50</option>
+                      <option value="-54">Y ≤ -54</option>
+                    </select>
+                  </div>
+                  <span class="form-aside" data-i18n="hint.heightShort">只保留 -40 及以下</span>
+                </div>
+
+                <div class="form-row">
+                  <label class="form-label" for="lVersion"><span data-i18n="label.version">版本</span></label>
+                  <div class="form-control">
+                    <select id="lVersion">
+                      <option value="26.2">26.2 ~ 26.3</option>
+                      <option value="1.19">1.19.x ~ 26.1</option>
+                      <option value="1.18">1.18.x</option>
+                    </select>
+                  </div>
+                  <span class="form-aside"></span>
+                </div>
+
+                <div class="form-row">
+                  <label class="form-label" for="lPreset"><span data-i18n="label.preset">世界类型</span></label>
+                  <div class="form-control">
+                    <select id="lPreset">
+                      <option value="normal" data-i18n="preset.normal">普通世界</option>
+                      <option value="large" data-i18n="preset.large">巨型生物群系</option>
+                      <option value="single" data-i18n="preset.single">单群系（沼泽）</option>
+                    </select>
+                  </div>
+                  <span class="form-aside"></span>
+                </div>
+              </section>
+
+              <section class="panel-section">
+                <div class="panel-title">
+                  <span class="num">03</span><span data-i18n="panel.range">搜索范围</span>
+                  <span class="range-summary" id="lRangeSummary">–</span>
+                </div>
+
+                <div class="preset-row" id="lPresets" role="group" aria-label="范围预设">
+                  <button type="button" class="preset-btn" data-mode="list" data-side="64">64</button>
+                  <button type="button" class="preset-btn active" data-mode="list" data-side="256">256</button>
+                  <button type="button" class="preset-btn" data-mode="list" data-side="117188" data-i18n="preset.world">世界边界</button>
+                </div>
+
+                <div class="bounds-rows" id="lBounds">
+                  <div class="form-row">
+                    <label class="form-label" for="lMinX">MinX <em>x512</em></label>
+                    <div class="form-control"><input id="lMinX" type="text" inputmode="numeric" value="-128"></div>
+                    <span class="form-aside block-hint" id="lMinXBlocks">= -65,536 方块</span>
+                  </div>
+                  <div class="form-row">
+                    <label class="form-label" for="lMaxX">MaxX <em>x512</em></label>
+                    <div class="form-control"><input id="lMaxX" type="text" inputmode="numeric" value="127"></div>
+                    <span class="form-aside block-hint" id="lMaxXBlocks">= 65,024 方块</span>
+                  </div>
+                  <div class="form-row">
+                    <label class="form-label" for="lMinZ">MinZ <em>x512</em></label>
+                    <div class="form-control"><input id="lMinZ" type="text" inputmode="numeric" value="-128"></div>
+                    <span class="form-aside block-hint" id="lMinZBlocks">= -65,536 方块</span>
+                  </div>
+                  <div class="form-row">
+                    <label class="form-label" for="lMaxZ">MaxZ <em>x512</em></label>
+                    <div class="form-control"><input id="lMaxZ" type="text" inputmode="numeric" value="127"></div>
+                    <span class="form-aside block-hint" id="lMaxZBlocks">= 65,024 方块</span>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <label class="form-label" for="lSide"><span data-i18n="label.side">正方形边长</span> <em>x512</em></label>
+                  <div class="form-control square-control">
+                    <label class="check-row">
+                      <input type="checkbox" id="lSquareMode" checked>
+                      <span data-i18n="label.squareMode">以 (0,0) 为中心</span>
+                    </label>
+                    <div class="side-input-row">
+                      <input id="lSide" type="text" inputmode="numeric" value="256">
+                      <span class="hint block-hint" id="lSideBlocks">= 131,072 方块</span>
+                    </div>
+                  </div>
+                  <span class="form-aside" data-i18n="hint.square">取消勾选可手动填写 Min/Max</span>
+                </div>
+              </section>
+            </div>
+            </div>
+
+            <div class="action-row">
+              <button class="btn primary" id="lStart" type="button">
+                <svg class="icon"><use href="#i-play"></use></svg><span data-i18n="btn.start">开始搜索</span>
+              </button>
+              <button class="btn amber" id="lPause" type="button" disabled>
+                <svg class="icon"><use href="#i-pause"></use></svg><span data-i18n="btn.pause">暂停</span>
+              </button>
+              <button class="btn danger" id="lStop" type="button" disabled>
+                <svg class="icon"><use href="#i-stop"></use></svg><span data-i18n="btn.stop">停止</span>
+              </button>
+              <button class="btn ghost" id="lReset" type="button" title="重置搜索区域 / Reset search range">
+                <svg class="icon"><use href="#i-reset"></use></svg><span data-i18n="btn.resetDefault">重置</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- SHARED PROGRESS -->
+          <div class="progress-card" id="progressCard">
+            <div class="progress-top">
+              <div class="progress-state">
+                <span class="state-dot" id="progressDot"></span>
+                <span id="progressStatus" data-i18n="progress.idle" aria-live="polite">等待开始</span>
+              </div>
+              <span class="progress-percent" id="progressPercent">0.00%</span>
+            </div>
+            <div class="progress-track" id="progressTrack" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="progress-meta">
+              <div><span data-i18n="progress.processed">已处理</span><strong id="progressProcessed">0 / 0</strong></div>
+              <div><span data-i18n="progress.results">结果</span><strong id="progressResults">0</strong></div>
+              <div><span data-i18n="progress.elapsed">已用时间</span><strong id="progressElapsed">0天 0时 0分 0秒</strong></div>
+              <div><span data-i18n="progress.remaining">剩余时间</span><strong id="progressRemaining">计算中…</strong></div>
+            </div>
+            <div class="progress-seed hidden" id="progressSeedRow">
+              <span data-i18n="progress.currentSeed">当前种子</span>
+              <code id="progressCurrentSeed">–</code>
+              <span class="progress-seed-index" id="progressSeedIndex"></span>
+            </div>
+            <div class="progress-estimate" id="progressEstimate"></div>
+          </div>
+        </div>
+
+        <!-- ==================== RESULTS (below the form) ==================== -->
+        <div class="results-panel" id="resultsPanel">
+          <div class="results-head">
+            <div class="results-title">
+              <h3 id="resultsTitle" data-i18n="results.title">检查结果</h3>
+              <span class="count-badge" id="resultsCount">0</span>
+            </div>
+            <div class="view-toggle" role="group" aria-label="结果视图">
+              <button type="button" class="view-btn active" data-view="table" id="viewTable" title="表格视图">
+                <svg class="icon"><use href="#i-layers"></use></svg>
+              </button>
+              <button type="button" class="view-btn" data-view="text" id="viewText" title="文本视图">
+                <svg class="icon"><use href="#i-file"></use></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="results-body">
+            <div class="empty-state" id="resultsEmpty">
+              <span class="empty-art">
+                <svg viewBox="0 0 120 120" aria-hidden="true">
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" stroke-opacity=".16" stroke-width="1.5" stroke-dasharray="4 7"/>
+                  <circle cx="60" cy="60" r="36" fill="none" stroke="currentColor" stroke-opacity=".1" stroke-width="1.5"/>
+                  <path d="M40 66 60 48l20 18" fill="none" stroke="currentColor" stroke-opacity=".7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M46 63v22h28V63" fill="none" stroke="currentColor" stroke-opacity=".45" stroke-width="2.6" stroke-linejoin="round"/>
+                  <circle cx="60" cy="70" r="3.2" fill="currentColor" fill-opacity=".8"/>
+                  <circle cx="86" cy="34" r="3" fill="currentColor" fill-opacity=".45"/>
+                  <circle cx="30" cy="44" r="2" fill="currentColor" fill-opacity=".35"/>
+                </svg>
+              </span>
+              <strong data-i18n="results.emptyTitle">还没有结果</strong>
+              <p data-i18n="results.emptyBody">设置好种子和范围，点击「开始搜索」。命中的小屋会以 /tp 坐标的形式出现在这里。</p>
+              <button type="button" class="btn ghost sm" id="emptyDemoBtn">
+                <svg class="icon"><use href="#i-bolt"></use></svg><span data-i18n="btn.tryDemo">试试示例种子</span>
+              </button>
+            </div>
+
+            <div class="table-wrap hidden" id="resultsTableWrap">
+              <table class="result-table" id="resultsTable">
+                <thead>
+                  <tr id="resultsHeadRow">
+                    <th class="col-idx">#</th>
+                    <th class="col-seed hidden" data-i18n="table.seed">种子</th>
+                    <th>X</th>
+                    <th>Y</th>
+                    <th>Z</th>
+                    <th class="col-distance" data-i18n="table.distance">距离原点</th>
+                    <th class="col-tp" data-i18n="table.tp">/tp 命令</th>
+                    <th class="col-actions"></th>
+                  </tr>
+                </thead>
+                <tbody id="resultsBody"></tbody>
+              </table>
+            </div>
+
+            <div class="text-view hidden" id="resultsTextView">
+              <pre id="resultsRaw"></pre>
+            </div>
+          </div>
+
+          <div class="results-foot">
+            <div class="foot-left">
+              <button class="btn ghost sm" id="btnCopyAll" type="button">
+                <svg class="icon"><use href="#i-copy"></use></svg><span data-i18n="btn.copyAll">复制全部</span>
+              </button>
+              <button class="btn ghost sm" id="btnExport" type="button">
+                <svg class="icon"><use href="#i-download"></use></svg><span data-i18n="btn.export">导出</span>
+              </button>
+              <button class="btn ghost sm hidden" id="btnExportSeeds" type="button">
+                <svg class="icon"><use href="#i-download"></use></svg><span data-i18n="btn.exportSeeds">导出种子列表</span>
+              </button>
+            </div>
+            <div class="foot-right">
+              <button class="btn ghost sm" id="btnSortY" type="button">
+                <svg class="icon"><use href="#i-sort"></use></svg><span data-i18n="btn.sortY">按 Y 排序</span>
+              </button>
+              <button class="btn ghost sm hidden" id="btnSortDistance" type="button">
+                <svg class="icon"><use href="#i-sort"></use></svg><span data-i18n="btn.sortDistance">按距离排序</span>
+              </button>
+              <button class="btn ghost sm danger-text" id="btnClear" type="button">
+                <svg class="icon"><use href="#i-trash"></use></svg><span data-i18n="btn.clear">清空</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <details class="known-results">
+      <summary>
+        <span data-i18n="known.title">示例种子的已知结果</span>
+        <span class="known-count">8</span>
+        <span class="known-seed">seed -1024459017</span>
+      </summary>
+      <div class="known-body">
+        <p data-i18n="known.desc">这是原项目验收数据中该种子的 8 个小屋。示例按钮只搜索其中第 4 个；完整列表可由世界边界搜索得到。</p>
+        <pre id="knownResults">/tp 234016 -44 -18221904
+/tp 27607376 -47 -7240176
+/tp 16007952 -43 3516000
+/tp 20082832 -54 4744416
+/tp 10995248 -54 7276048
+/tp 3267728 -54 10839360
+/tp -2260784 -54 13017184
+/tp -2274464 -54 17901776</pre>
+      </div>
+    </details>
+  </section>
+<!-- APP_SECTION_END -->
+
+  <!-- ============================ FEATURES ============================ -->
+  <section class="section shell" id="features">
+    <div class="section-head">
+      <span class="eyebrow" data-i18n="features.eyebrow">为什么用它</span>
+      <h2 data-i18n="features.title">与桌面版同源的搜索内核</h2>
+      <p data-i18n="features.sub">不是重新实现，也不是查表 —— 是同一套 C 代码编译成 WebAssembly。</p>
+    </div>
+    <div class="feature-grid">
+      <article class="feature-card">
+        <span class="feature-icon"><svg class="icon"><use href="#i-cube"></use></svg></span>
+        <h3 data-i18n="features.f1.title">同一套 C 内核</h3>
+        <p data-i18n="features.f1.body">阶段 1 气候筛选与阶段 2 精确高度都由原项目 C 内核完成，与 Java 桌面版走同一条代码路径。</p>
+      </article>
+      <article class="feature-card">
+        <span class="feature-icon"><svg class="icon"><use href="#i-lock"></use></svg></span>
+        <h3 data-i18n="features.f2.title">种子不出浏览器</h3>
+        <p data-i18n="features.f2.body">所有计算在本地 WebAssembly 中完成，没有后端、没有上传、没有遥测。断网也能继续用。</p>
+      </article>
+      <article class="feature-card">
+        <span class="feature-icon"><svg class="icon"><use href="#i-layers"></use></svg></span>
+        <h3 data-i18n="features.f3.title">精确的小屋 Y</h3>
+        <p data-i18n="features.f3.body">Y 来自 footprint 全部 63 列的平均高度，并经过含水层灌满判定 —— 就是游戏里真实的建筑高度。</p>
+      </article>
+      <article class="feature-card">
+        <span class="feature-icon"><svg class="icon"><use href="#i-globe"></use></svg></span>
+        <h3 data-i18n="features.f4.title">多版本 · 多世界</h3>
+        <p data-i18n="features.f4.body">支持 26.2~26.3、1.19.x~26.1、1.18.x，以及普通、巨型生物群系、单群系（沼泽）三种世界。</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============================ HOW IT WORKS ============================ -->
+  <section class="section shell" id="how">
+    <div class="section-head">
+      <span class="eyebrow" data-i18n="how.eyebrow">原理</span>
+      <h2 data-i18n="how.title">三步，从种子到坐标</h2>
+      <p data-i18n="how.sub">和桌面版完全相同的判定流程，只是在浏览器里跑。</p>
+    </div>
+    <div class="steps">
+      <article class="step-card">
+        <span class="step-num">01</span>
+        <h3 data-i18n="how.s1.title">输入种子与范围</h3>
+        <p data-i18n="how.s1.body">种子可以是任意 64 位整数。范围用「区域」表示：1 个区域 = 32 × 32 个区块 = 512 × 512 个方块。</p>
+      </article>
+      <article class="step-card">
+        <span class="step-num">02</span>
+        <h3 data-i18n="how.s2.title">WASM 逐区域筛选</h3>
+        <p data-i18n="how.s2.body">阶段 1 用气候、洞穴梯子、大陆性与含水层洪水度快速排除绝大多数区域；只有极少数候选进入阶段 2。</p>
+      </article>
+      <article class="step-card">
+        <span class="step-num">03</span>
+        <h3 data-i18n="how.s3.title">精确高度与群系确认</h3>
+        <p data-i18n="how.s3.body">阶段 2 计算 footprint 全部 63 列的平均高度，并确认群系确实是沼泽、没有被水灌满，最后输出 /tp 坐标。</p>
+      </article>
+    </div>
+    <div class="tech-grid">
+      <article class="tech-card">
+        <span class="tech-tag">PHASE 1</span>
+        <h4 data-i18n="tech.p1.title">气候与洞穴梯子</h4>
+        <p data-i18n="tech.p1.body">erosion / temperature / ridge / continentalness 与多层洞穴噪声，逐项淘汰候选区域。</p>
+      </article>
+      <article class="tech-card">
+        <span class="tech-tag">PHASE 2</span>
+        <h4 data-i18n="tech.p2.title">63 列 footprint</h4>
+        <p data-i18n="tech.p2.body">三线性插值高度图 + 含水层判定 + 洞穴雕刻，得到真实的方块高度。Y 即小屋的真实 Y。</p>
+      </article>
+      <article class="tech-card">
+        <span class="tech-tag">BIOME</span>
+        <h4 data-i18n="tech.biome.title">真实群系门</h4>
+        <p data-i18n="tech.biome.body">用 Minecraft 的多噪声群系参数树做最终判定，而不是只看气候近似值，避免假阳性。</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============================ FAQ ============================ -->
+  <section class="section shell" id="faq">
+    <div class="section-head">
+      <span class="eyebrow" data-i18n="faq.eyebrow">常见问题</span>
+      <h2 data-i18n="faq.title">你可能想知道</h2>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item" open>
+        <summary><span data-i18n="faq.q1">结果里的 Y 是什么？</span><span class="faq-plus"></span></summary>
+        <div class="faq-body" data-i18n="faq.a1">Y 是小屋 footprint 全部 63 列高度的平均值（整数除法，向零截断），也就是游戏里女巫小屋的真实建筑高度。它不是海平面，也不是近似值。</div>
+      </details>
+      <details class="faq-item">
+        <summary><span data-i18n="faq.q2">为什么整图搜索仍然需要几分钟？</span><span class="faq-plus"></span></summary>
+        <div class="faq-body" data-i18n="faq.a2">单种子在 HTTP 下会自动使用多个 Web Worker，但整图仍有 137 亿个区域，受 CPU 和内存带宽限制，无法像小范围那样瞬间完成；file:// 下浏览器不允许 Worker 读取本地脚本，会回退为单线程，明显更慢。</div>
+      </details>
+      <details class="faq-item">
+        <summary><span data-i18n="faq.q3">线程数是怎么自动工作的？</span><span class="faq-plus"></span></summary>
+        <div class="faq-body" data-i18n="faq.a3">HTTP 下页面会启动最多 12 个 Web Worker（移动端最多 4 个），每个 Worker 持有自己的 WASM 实例并扫描一段 Z 范围，因此不需要 SharedArrayBuffer / COOP-COEP。file:// 下无法启动这种 Worker，自动回退单线程；用 serve.ps1 / serve.sh 打开即可多线程。</div>
+      </details>
+      <details class="faq-item">
+        <summary><span data-i18n="faq.q4">找不到小屋是正常的吗？</span><span class="faq-plus"></span></summary>
+        <div class="faq-body" data-i18n="faq.a4">是。低 Y 女巫小屋非常稀有，整个 Minecraft 世界边界内通常也只有个位数到十几个。如果当前范围没有结果，可以换种子或扩大范围；高度筛选只提供 -40 及以下，-40 是最宽松的选项。</div>
+      </details>
+      <details class="faq-item">
+        <summary><span data-i18n="faq.q5">会上传我的种子或数据吗？</span><span class="faq-plus"></span></summary>
+        <div class="faq-body" data-i18n="faq.a5">不会。页面没有后端接口，所有计算在浏览器本地完成。种子只存在于当前页面内存中，刷新或关闭页面后即消失。</div>
+      </details>
+      <details class="faq-item">
+        <summary><span data-i18n="faq.q6">支持哪些版本和世界类型？</span><span class="faq-plus"></span></summary>
+        <div class="faq-body" data-i18n="faq.a6">支持 26.2~26.3（默认）、1.19.x~26.1、1.18.x；世界类型支持普通、巨型生物群系和单群系（沼泽）。版本会同时影响阶段 1 规则和群系参数表。</div>
+      </details>
+      <details class="faq-item">
+        <summary><span data-i18n="faq.q7">可以在 macOS / Linux 上运行吗？</span><span class="faq-plus"></span></summary>
+        <div class="faq-body" data-i18n="faq.a7">可以。网页和 WASM 与操作系统无关，Chrome / Edge / Firefox / Safari 都能运行。构建脚本提供 Windows 的 build.ps1 和 macOS / Linux 的 build.sh；serve.sh 用于本地服务器。</div>
+      </details>
+      <details class="faq-item">
+        <summary><span data-i18n="faq.q8">这个页面使用什么许可证？</span><span class="faq-plus"></span></summary>
+        <div class="faq-body" data-i18n="faq.a8">MIT License。页面与 WASM 封装代码以 MIT 发布，C 内核沿用原项目的 MIT 许可证。完整文本见页面底部的许可证链接。</div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============================ CREDITS ============================ -->
+  <section class="section shell">
+    <div class="credit-card">
+      <div class="credit-mark"><svg class="icon"><use href="#i-hut"></use></svg></div>
+      <div class="credit-copy">
+        <blockquote data-i18n="credit.quote">每一个种子，都有一个低 y 女巫小屋的梦想。</blockquote>
+        <p data-i18n="credit.by">—— SunnySlopes · 原作：b站 M33三角座星系 &amp; SunnySlopes</p>
+        <p class="muted small" data-i18n="credit.web">本页面是 LowYSwampHut 的 WebAssembly 网页版，计算内核来自原项目，UI 为网页重新设计。</p>
+        <p class="muted small"><a href="LICENSE" target="_blank" rel="noopener" data-i18n="license.link">MIT 许可证</a></p>
+      </div>
+      <a class="btn ghost sm" href="https://github.com/M33Galaxy" target="_blank" rel="noopener noreferrer">
+        <span>GitHub</span><svg class="icon"><use href="#i-arrow"></use></svg>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="shell footer-inner">
+    <div class="footer-brand">
+      <span class="brand-mark sm"><svg class="icon"><use href="#i-hut"></use></svg></span>
+      <span>Low-Y Swamp Hut <span class="muted">· WebAssembly Edition</span></span>
+    </div>
+    <div class="footer-links">
+      <span class="muted small"><span data-i18n="footer.engine">内核</span>: <code id="footerVersion">–</code></span>
+      <a class="muted small" href="LICENSE" target="_blank" rel="noopener" data-i18n="license.link">MIT 许可证</a>
+      <a class="muted small" href="mobile.html" data-i18n="footer.mobile">移动版</a>
+      <span class="muted small">© <span id="year">2026</span> LowYSwampHut</span>
+    </div>
+  </div>
+</footer>
+
+<!-- Toast host -->
+<div class="toast-host" id="toastHost" aria-live="polite" aria-atomic="false"></div>
+
+<!-- Confirm dialog -->
+<dialog class="modal" id="confirmDialog">
+  <form method="dialog" class="modal-card">
+    <div class="modal-icon warn"><svg class="icon"><use href="#i-warn"></use></svg></div>
+    <h3 id="confirmTitle">确认</h3>
+    <p id="confirmMessage"></p>
+    <div class="modal-actions">
+      <button value="cancel" class="btn ghost" id="confirmCancel" type="submit" data-i18n="btn.cancel">取消</button>
+      <button value="ok" class="btn primary" id="confirmOk" type="submit" data-i18n="btn.confirm">继续</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Boot overlay -->
+<div class="boot-overlay" id="bootOverlay">
+  <div class="boot-card">
+    <div class="boot-spinner"><span></span><span></span><span></span></div>
+    <h3 id="bootTitle" data-i18n="boot.title">正在唤醒 WASM 内核…</h3>
+    <p id="bootText" data-i18n="boot.text">首次加载需要解析不到 1 MB 的 WebAssembly 模块，通常只需一两秒。</p>
+    <div class="boot-bar"><div class="boot-progress" id="bootProgress"></div></div>
+    <pre class="boot-error hidden" id="bootError"></pre>
+    <button class="btn primary sm hidden" id="bootRetry" type="button" data-i18n="btn.retry">重新加载</button>
+  </div>
+</div>
+
+<script src="js/i18n.js"></script>
+<script src="js/lysh-core.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

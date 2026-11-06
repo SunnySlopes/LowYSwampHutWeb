@@ -1,0 +1,126 @@
+/* ============================================================
+   Mobile portrait edition — fewer elements, one-hand use.
+   Loaded only by mobile.html (body.mobile-page).
+   ============================================================ */
+
+body.mobile-page { font-size: 14px; }
+body.mobile-page .shell { width: calc(100% - 20px); }
+
+body.mobile-page .header-inner { min-height: 56px; gap: 8px; }
+body.mobile-page .brand-mark { width: 34px; height: 34px; border-radius: 10px; }
+body.mobile-page .brand-mark .icon { width: 19px; height: 19px; }
+body.mobile-page .brand-text strong { font-size: 13.5px; }
+body.mobile-page .brand-text small { display: none; }
+body.mobile-page .engine-pill { height: 30px; padding: 0 8px; }
+body.mobile-page .engine-pill span:last-child { display: none; }
+body.mobile-page .icon-btn { height: 30px; min-width: 30px; padding: 0 7px; }
+body.mobile-page .header-actions { gap: 5px; }
+
+body.mobile-page #search.section { padding: 12px 0 20px; }
+body.mobile-page #search .section-head { margin-bottom: 10px; }
+body.mobile-page #search .section-head .eyebrow { font-size: 10px; letter-spacing: 0.14em; }
+body.mobile-page #search .section-head h2 { font-size: 1.32rem; margin: 4px 0 0; }
+body.mobile-page #search .section-head p { display: none; }
+
+body.mobile-page .app-shell { max-width: 640px; margin-inline: auto; border-radius: 16px; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28); }
+body.mobile-page .app-topbar { border-radius: 16px 16px 0 0; }
+body.mobile-page .app-grid { display: block; height: auto; min-height: 0; }
+body.mobile-page .control-panel {
+  display: block;
+  border-right: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  overflow: visible;
+  min-height: 0;
+}
+body.mobile-page .tab-panel { display: block; }
+body.mobile-page .results-panel {
+  position: static;
+  top: auto;
+  height: auto;
+  border-left: none;
+  border-radius: 0 0 16px 16px;
+  min-height: 0;
+}
+body.mobile-page .action-row, body.mobile-page .progress-card { max-width: none; }
+body.mobile-page .app-topbar { padding: 8px; gap: 8px; }
+body.mobile-page .app-tabs { width: 100%; padding: 3px; }
+body.mobile-page .tab { flex: 1; justify-content: center; gap: 5px; padding: 8px 4px; font-size: 12px; }
+body.mobile-page .tab .icon { width: 13px; height: 13px; }
+body.mobile-page .app-topbar-right { display: none; }
+
+body.mobile-page .control-panel { padding: 10px 10px 12px; }
+body.mobile-page .panel-title { margin-bottom: 6px; font-size: 9.5px; flex-wrap: wrap; row-gap: 4px; }
+body.mobile-page .panel-title .num { font-size: 8.5px; }
+body.mobile-page .panel-section { padding: 6px 0 8px; }
+body.mobile-page .range-summary {
+  margin-left: 0;
+  max-width: 100%;
+  font-size: 9px;
+  white-space: normal;
+}
+
+body.mobile-page .form-row,
+body.mobile-page .form-row.wide { grid-template-columns: 1fr; gap: 3px; padding: 5px 0; }
+body.mobile-page .form-label { min-height: 0; font-size: 11.5px; }
+body.mobile-page .form-aside { display: none; }
+body.mobile-page .hint,
+body.mobile-page .block-hint { display: none; }
+body.mobile-page .form-control input,
+body.mobile-page .form-control select { height: 40px; font-size: 16px; }
+body.mobile-page .side-input-row { gap: 6px; }
+body.mobile-page .side-input-row input { width: 100%; }
+body.mobile-page .square-control .check-row { font-size: 11.5px; }
+body.mobile-page .thread-row { display: none; }
+body.mobile-page .bounds-rows.square-on { display: none; }
+body.mobile-page .dropzone.compact { min-height: 92px; padding: 12px; }
+
+body.mobile-page .action-row { grid-template-columns: 1fr 1fr; max-width: none; gap: 6px; padding: 8px 0 6px; }
+body.mobile-page .action-row .btn { min-height: 40px; font-size: 12.5px; }
+
+body.mobile-page .progress-card { max-width: none; margin-top: 8px; padding: 10px; }
+body.mobile-page .progress-meta { gap: 6px 10px; }
+body.mobile-page .progress-meta strong { font-size: 10.5px; }
+body.mobile-page .progress-estimate { display: none; }
+
+body.mobile-page .results-head { padding: 10px 12px; }
+body.mobile-page .results-body { min-height: 380px; }
+body.mobile-page .results-foot { padding: 8px; gap: 6px; }
+body.mobile-page .results-foot .btn { min-height: 32px; padding: 0 9px; font-size: 11px; }
+body.mobile-page .results-foot .btn .icon { width: 13px; height: 13px; }
+body.mobile-page .known-results { display: none; }
+
+body.mobile-page .result-table { min-width: 0; }
+body.mobile-page .result-table th.col-distance,
+body.mobile-page .result-table th.col-tp,
+body.mobile-page .result-table td.cell-distance,
+body.mobile-page .result-table td.cell-tp { display: none; }
+body.mobile-page .result-table thead th { padding: 8px 6px; }
+body.mobile-page .result-table tbody td { padding: 8px 6px; }
+body.mobile-page .col-idx { width: 28px; }
+body.mobile-page .col-actions { width: 38px; }
+body.mobile-page .result-table tbody td.col-seed code { font-size: 9.5px; }
+body.mobile-page .empty-state { padding: 20px; }
+body.mobile-page .empty-art { width: 78px; height: 78px; margin-bottom: 0; }
+body.mobile-page .empty-state strong { font-size: 13px; }
+body.mobile-page .empty-state p { font-size: 11.5px; margin: 5px 0 12px; }
+
+body.mobile-page .site-footer { padding: 16px 0 24px; margin-top: 8px; }
+body.mobile-page .footer-inner { gap: 10px; }
+body.mobile-page .footer-brand { font-size: 11.5px; }
+body.mobile-page .footer-links { gap: 10px; font-size: 10.5px; }
+body.mobile-page .footer-links .muted { font-size: 10px; }
+
+body.mobile-page .toast-host { left: 10px; right: 10px; bottom: 10px; align-items: stretch; }
+body.mobile-page .toast { max-width: none; }
+body.mobile-page .modal-card { padding: 18px; }
+
+body.mobile-page .mobile-note {
+  max-width: 980px;
+  margin: 12px auto 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+  text-align: center;
+}
+body.mobile-page .mobile-note a { color: var(--accent); }

@@ -1,0 +1,4 @@
+# Low-Y Swamp Hut — sample seed list
+# One seed per line; blank lines and lines starting with # are ignored.
+# Demo seed used by the page (one of its known huts is /tp 20082832 -54 4744416):
+-1024459017
