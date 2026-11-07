@@ -845,10 +845,10 @@
     return lines.length ? lines.join('\n') + '\n' : '';
   }
 
+  /** -54 ~ -50 use the warm highlight; anything higher than -50 stays green. */
   function yClass(y) {
-    if (y <= -45) return '';
-    if (y <= -35) return 'y-mid';
-    return 'y-high';
+    if (y <= -50) return 'y-low';
+    return '';
   }
 
   function makeCell(text, cls) {

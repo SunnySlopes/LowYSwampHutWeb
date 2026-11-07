@@ -68,6 +68,7 @@ The “Mobile / Desktop” links at the bottom switch between editions.
 | World types | Normal, Large Biomes, Single Biome (Swamp) |
 | Height filter | Only **-40 / -50 / -54** (-40 is the loosest) |
 | Exact Y | Same 63-column footprint average plus aquifer flood test as the desktop edition |
+| Y colours | Values above **-50** use the default green; **-50 to -54** use the warm highlight |
 | Pause / resume / stop | Chunked scanning; pause and stop take effect at chunk boundaries |
 | Results | Table / text views; copy `/tp`; export results; export hit-seed list |
 | Sorting | Single seed by Y; list by lowest Y or distance from origin |
