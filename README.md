@@ -275,6 +275,9 @@ chmod +x wasm/build.sh
 
 - [M33Galaxy](https://github.com/M33Galaxy) —— 核心算法与 C 内核
 - [SunnySlopes](https://github.com/SunnySlopes) —— 灵感与桌面版 UI
+- [原 Java 版库](https://github.com/M33Galaxy/LowYSwampHut)
+- [基底库](https://github.com/M33Galaxy/LowYSwampHutFinderBase)
+- [网页版库](https://github.com/SunnySlopes/LowYSwampHutWeb) —— 当在线搜索过慢或遇到问题时请下载该库本地启动进行快速搜索
 - [KalleStruik](https://github.com/KalleStruik) —— Noise Sampler（参考）
 - 字体：江城黑体（桌面版）；网页版使用系统字体以保证离线可用
 - 展示图：用户提供的低 Y 女巫小屋游戏截图（`assets/low-y-swamp-hut.webp`）

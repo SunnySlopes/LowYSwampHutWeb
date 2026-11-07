@@ -1306,6 +1306,7 @@ html[data-theme="light"] .faq-item[open] { background: rgba(255, 255, 255, 0.9);
 .credit-card {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 22px;
   padding: 28px 30px;
   border-radius: 22px;
@@ -1334,6 +1335,34 @@ html[data-theme="light"] .credit-card { background: linear-gradient(180deg, rgba
   color: var(--text);
 }
 .credit-copy p { margin: 0; font-size: 12px; color: var(--muted); }
+.credit-actions {
+  flex: 0 0 100%;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.credit-actions-title {
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  color: var(--muted-2);
+}
+.credit-github {
+  width: auto;
+  justify-content: center;
+}
+.credit-actions-note {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted);
+}
 
 /* ---------------------------------------------------------- footer */
 .site-footer { border-top: 1px solid var(--line); padding: 26px 0 34px; margin-top: 20px; }
@@ -1568,6 +1597,7 @@ html[data-theme="light"] .boot-overlay { background: rgba(232, 243, 236, 0.85); 
   .result-table thead th { padding: 9px 8px; }
   .credit-card { flex-direction: column; align-items: flex-start; padding: 22px; }
   .credit-card > .btn { align-self: flex-start; }
+  .credit-actions { width: 100%; }
   .footer-inner { flex-direction: column; align-items: flex-start; }
   .footer-links { margin-left: 0; }
   .toast-host { left: 14px; right: 14px; bottom: 14px; align-items: stretch; }
