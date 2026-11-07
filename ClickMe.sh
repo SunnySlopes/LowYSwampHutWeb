@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Serve this folder on macOS / Linux.
-#   chmod +x serve.sh
-#   ./serve.sh              # http://127.0.0.1:8080/ (opens browser)
-#   ./serve.sh 9000         # custom port
-#   NO_OPEN=1 ./serve.sh    # do not open a browser
-#   ./serve.sh 9000 --no-open
+#   chmod +x ClickMe.sh
+#   ./ClickMe.sh              # http://127.0.0.1:8080/ (opens browser)
+#   ./ClickMe.sh 9000         # custom port
+#   NO_OPEN=1 ./ClickMe.sh    # do not open a browser
+#   ./ClickMe.sh 9000 --no-open
 set -euo pipefail
 cd "$(dirname "$0")"
 
