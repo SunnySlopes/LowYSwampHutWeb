@@ -9,14 +9,6 @@
 > 每一个种子，都有一个低 y 女巫小屋的梦想。
 > —— SunnySlopes
 
-![页面预览](assets/preview-hero.png)
-
-![搜索控制台](assets/preview-app.png)
-
-宽屏桌面：左侧是填写与操作区，右侧是结果区；移动端/窄屏：结果区在填写区下方。两种布局下，搜索控制台之后都是「为什么用它」→ 原理 → 常见问题。
-
-![移动端竖屏](assets/preview-mobile.png)
-
 ---
 
 ## 快速开始
