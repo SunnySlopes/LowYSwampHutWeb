@@ -56,7 +56,7 @@ chmod +x serve.sh
 ### 移动端
 
 `mobile.html` 是竖屏精简版：去掉首屏介绍、功能卡、原理和 FAQ，只保留搜索控制台与结果区，
-并隐藏线程数、辅助提示、距离列和 `/tp` 文本列等非必要元素。页面底部的「移动版 / 桌面版」
+并隐藏大部分辅助提示、距离列和 `/tp` 文本列等非必要元素。页面底部的「移动版 / 桌面版」
 链接可以在两个版本之间切换。
 
 ---
@@ -101,6 +101,8 @@ chmod +x serve.sh
 | 原生 C，32 线程 | ~71M | 32 逻辑核 |
 | WASM，12 个 Web Worker（HTTP） | ~36–40M | 每个 Worker 64 MB 初始内存 |
 
+> 页面默认使用本机最大线程数，可在「线程数」输入框调整；上表的 12 个 Worker 是实测配置。
+
 **为什么之前会觉得“慢了 1000 倍”？**
 
 - `LowYSwampHutFinderBase-cli scan --seed X` **不传范围**时只扫
@@ -112,9 +114,9 @@ chmod +x serve.sh
 
 **现在的加速方式：**
 
-- 用 `serve.ps1` / `serve.sh` 通过 **HTTP** 打开页面：单种子大范围搜索会自动启动
-  **最多 12 个 Web Worker**（移动端最多 4 个），每个 Worker 持有自己的 WASM 实例，
-  不需要 SharedArrayBuffer / COOP-COEP。
+- 用 `serve.ps1` / `serve.sh` 通过 **HTTP** 打开页面：单种子大范围搜索默认使用
+  **本机最大线程数**（桌面最多 32 个，移动端最多 4 个），可在页面「线程数」输入框调整；
+  每个 Worker 持有自己的 WASM 实例，不需要 SharedArrayBuffer / COOP-COEP。
 - `file://` 下 Chrome 禁止 Worker 读取本地脚本，页面自动回退单线程；
   线程数字段会显示 `1`，旁边会提示用 serve 启动。
 - 世界边界整图：HTTP 下本机约 **6 分钟**（实测 36–40M 区域/秒）；
@@ -122,7 +124,7 @@ chmod +x serve.sh
 
 ### 网页版限制
 
-- 单种子大范围：HTTP 下自动多线程；`file://` 下为单线程。
+- 单种子大范围：HTTP 下默认使用本机最大线程数，可手动调整；`file://` 下为单线程。
 - 如果浏览器无法提供 CPU 核心数，或 Worker 创建/加载失败，页面会自动回退到
   主线程单线程继续搜索，不弹错误框；线程字段会显示回退原因。
 - 种子列表模式目前按种子顺序逐个扫描（默认 256，单个种子很快）；
@@ -219,7 +221,7 @@ chmod +x wasm/build.sh
 - `--no-entry -sMODULARIZE=1 -sSINGLE_FILE=1`，生成单文件 `js/lysh-core.js`
   （WASM base64 内嵌）；
 - 单实例初始内存 **64 MB**，`-sALLOW_MEMORY_GROWTH=1` 按需增长；
-  12 个 Worker 约 768 MB 初始内存。
+  默认最多 32 个 Worker（移动端最多 4 个），12 个 Worker 约 768 MB 初始内存。
 
 构建产物覆盖 `js/lysh-core.js`。重新打开页面，右上角显示 **WASM 就绪**，
 启动自检通过时 badge 标题会包含 `self-test OK`。

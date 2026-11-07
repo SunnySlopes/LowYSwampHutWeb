@@ -1582,6 +1582,7 @@ html[data-theme="light"] .boot-overlay { background: rgba(232, 243, 236, 0.85); 
   .form-row, .form-row.wide { grid-template-columns: 1fr; gap: 3px; padding: 6px 0; }
   .form-label { min-height: 0; }
   .form-aside { display: none; }
+  .thread-row .form-aside { display: block; grid-column: 1; }
   .bounds-rows.square-on { display: none; }
   .form-control input, .form-control select { font-size: 16px; }
   .action-row { grid-template-columns: 1fr 1fr; }

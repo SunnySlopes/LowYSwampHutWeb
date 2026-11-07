@@ -152,7 +152,7 @@
     <div class="section-head compact">
       <span class="eyebrow" data-i18n="app.eyebrow">搜索控制台</span>
       <h2 data-i18n="app.title">开始寻找你的低 Y 女巫小屋</h2>
-      <p data-i18n="app.sub">单种子默认世界边界（HTTP 下自动多线程），种子列表默认 256；file:// 下为单线程，建议用 serve 启动以启用多线程。</p>
+      <p data-i18n="app.sub">单种子默认世界边界（HTTP 下默认本机最大线程数，可在线程数字段调整），种子列表默认 256；file:// 下为单线程，建议用 serve 启动以启用多线程。</p>
     </div>
 
     <div class="app-shell">
@@ -201,7 +201,7 @@
 
                 <div class="form-row thread-row">
                   <label class="form-label" for="sThreads"><span data-i18n="label.threads">线程数</span> <span class="tag">WASM</span></label>
-                  <div class="form-control"><input id="sThreads" type="text" value="1" readonly tabindex="-1"></div>
+                  <div class="form-control"><input id="sThreads" type="number" min="1" max="32" step="1" value="1" inputmode="numeric" autocomplete="off"></div>
                   <span class="form-aside" id="sThreadHint">自动检测线程</span>
                 </div>
               </section>
@@ -683,8 +683,8 @@
         <div class="faq-body" data-i18n="faq.a2">单种子在 HTTP 下会自动使用多个 Web Worker，但整图仍有 137 亿个区域，受 CPU 和内存带宽限制，无法像小范围那样瞬间完成；file:// 下浏览器不允许 Worker 读取本地脚本，会回退为单线程，明显更慢。</div>
       </details>
       <details class="faq-item">
-        <summary><span data-i18n="faq.q3">线程数是怎么自动工作的？</span><span class="faq-plus"></span></summary>
-        <div class="faq-body" data-i18n="faq.a3">HTTP 下页面会启动最多 12 个 Web Worker（移动端最多 4 个），每个 Worker 持有自己的 WASM 实例并扫描一段 Z 范围，因此不需要 SharedArrayBuffer / COOP-COEP。file:// 下无法启动这种 Worker，自动回退单线程；用 serve.ps1 / serve.sh 打开即可多线程。如果浏览器无法提供 CPU 核心数，或 Worker 创建/加载失败，也会自动回退单线程，不弹错误框。</div>
+        <summary><span data-i18n="faq.q3">线程数怎么调整？</span><span class="faq-plus"></span></summary>
+        <div class="faq-body" data-i18n="faq.a3">HTTP 下默认使用本机最大逻辑核心数（桌面最多 32 个，移动端最多 4 个），可在「线程数」输入框内调低或调高。每个 Worker 持有自己的 WASM 实例，约占用 64MB 内存，设置过高可能内存不足。file:// 下无法启动 Worker，自动回退单线程；检测不到 CPU 核心数或 Worker 启动失败时也会自动回退，不弹错误框。</div>
       </details>
       <details class="faq-item">
         <summary><span data-i18n="faq.q4">找不到小屋是正常的吗？</span><span class="faq-plus"></span></summary>

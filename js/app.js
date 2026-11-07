@@ -523,9 +523,9 @@
 
   /* ---------------------------------------------------------- ranges */
   const DEFAULT_SIDE = { s: 117188, l: 256 };
+  const MAX_WORKERS = 32;
+  const MAX_ESTIMATED_RATE = 60000000;
 
-  /** Number of independent WebAssembly workers for a single-seed search.
-   *  file:// cannot start workers in Chrome; HTTP(S) can use CPU cores. */
   function cpuCores() {
     try {
       const n = Number(navigator.hardwareConcurrency);
@@ -535,22 +535,40 @@
     }
   }
 
-  function workerCount() {
+  function isSmallScreen() {
+    if (!window.matchMedia) return false;
+    return window.matchMedia('(max-width: 900px)').matches ||
+      window.matchMedia('(pointer: coarse)').matches;
+  }
+
+  /** Maximum selectable workers. file:// and browsers without Worker can
+   *  only use the main thread; mobile is capped for memory safety. */
+  function maxWorkerCount() {
     if (location.protocol === 'file:') return 1;
     if (typeof Worker === 'undefined') return 1;
     const cores = cpuCores();
     if (!cores) return 1;
-    const small = !!(window.matchMedia && window.matchMedia('(max-width: 900px)').matches);
-    const mem = Number(navigator.deviceMemory);
-    const maxByMode = small ? 4 : 12;
-    const byMem = Number.isFinite(mem) && mem > 0
-      ? (mem >= 8 ? 12 : (mem >= 4 ? 4 : 2))
-      : (small ? 4 : 8);
-    return Math.max(1, Math.min(maxByMode, cores, byMem));
+    return Math.max(1, Math.min(cores, isSmallScreen() ? 4 : MAX_WORKERS));
   }
 
-  function threadHintKey(n) {
-    if (n > 1) return 'hint.threadsAuto';
+  function defaultWorkerCount() {
+    return maxWorkerCount();
+  }
+
+  function clampWorkerCount(value, max) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return 1;
+    return Math.max(1, Math.min(max, Math.round(n)));
+  }
+
+  function estimatedRateForWorkers(n) {
+    return n > 1
+      ? Math.min(INITIAL_RATE * n * 0.5, MAX_ESTIMATED_RATE)
+      : INITIAL_RATE;
+  }
+
+  function threadHintKey(n, max) {
+    if (max > 1) return state.threadFallback ? 'hint.threadsFallbackEditable' : 'hint.threadsEditable';
     if (state.threadFallback) return 'hint.threadsFallback';
     if (location.protocol === 'file:') return 'hint.threadsSingle';
     if (typeof Worker === 'undefined') return 'hint.threadsFallback';
@@ -559,18 +577,38 @@
   }
 
   function syncThreadHint() {
-    const n = state.workerCount || 1;
-    const key = threadHintKey(n);
-    const hint = key === 'hint.threadsAuto' ? t(key, { n: n }) : t(key);
+    const max = maxWorkerCount();
+    const editable = max > 1;
+    const n = clampWorkerCount(state.workerCount, max);
+    state.workerCount = n;
+
+    const key = threadHintKey(n, max);
+    const hint = t(key, { n: n, max: max });
     const sThreads = $('sThreads');
     const lThreads = $('lThreads');
-    if (sThreads) sThreads.value = String(n);
+    if (sThreads) {
+      sThreads.value = String(n);
+      sThreads.max = String(max);
+      sThreads.readOnly = !editable;
+      sThreads.tabIndex = editable ? 0 : -1;
+      sThreads.title = hint;
+    }
     if (lThreads) lThreads.value = '1';
     const sHint = $('sThreadHint');
     if (sHint) sHint.textContent = hint;
     const lHint = $('lThreadHint');
     if (lHint) lHint.textContent = t('hint.threadsList');
-    if (sThreads) sThreads.title = hint;
+  }
+
+  /** Apply a user-selected worker count (clamped to the detected maximum). */
+  function applyWorkerCount(value) {
+    const max = maxWorkerCount();
+    const n = clampWorkerCount(value, max);
+    state.workerCount = n;
+    state.threadFallback = false;
+    state.rate = estimatedRateForWorkers(n);
+    syncThreadHint();
+    updateRangeSummaries();
   }
 
   function tryReadRange(prefix) {
@@ -1078,7 +1116,10 @@
         } else {
           // A small single-seed search ran in one thread; extrapolate it to
           // the worker count used by large searches.
-          state.rate = p.rate * (state.workerCount > 1 ? state.workerCount * 0.5 : 1);
+          state.rate = Math.min(
+            p.rate * (state.workerCount > 1 ? state.workerCount * 0.5 : 1),
+            MAX_ESTIMATED_RATE
+          );
         }
       }
     } else if (outcome === 'stopped') {
@@ -1414,7 +1455,14 @@
       return;
     }
     const cfg = buildConfig(range);
-    const n = state.workerCount || 1;
+    const maxThreads = maxWorkerCount();
+    const n = clampWorkerCount($('sThreads').value, maxThreads);
+    if (n !== state.workerCount) {
+      state.workerCount = n;
+      state.rate = estimatedRateForWorkers(n);
+      syncThreadHint();
+      updateRangeSummaries();
+    }
     if (n > 1 && cfg.cells >= 8388608) {
       await runSingleParallel(parsed.seed, cfg, n);
     } else {
@@ -1510,7 +1558,7 @@
   }
 
   /* ---------------------------------------------------------- controls state */
-  const SINGLE_INPUT_IDS = ['sSeed', 'sVersion', 'sPreset', 'sHeight', 'sRandom', 'sDemo', 'sStart', 'sReset'];
+  const SINGLE_INPUT_IDS = ['sSeed', 'sThreads', 'sVersion', 'sPreset', 'sHeight', 'sRandom', 'sDemo', 'sStart', 'sReset'];
   const LIST_INPUT_IDS = ['lVersion', 'lPreset', 'lHeight', 'lStart', 'lReset'];
 
   function setRunningUI(running) {
@@ -1842,6 +1890,17 @@
     $('sSeed').addEventListener('keydown', function (e) {
       if (e.key === 'Enter') { e.preventDefault(); startSingle(); }
     });
+    $('sThreads').addEventListener('input', function () {
+      if (this.readOnly) return;
+      const raw = this.value.trim();
+      if (raw === '') return;
+      const n = Number(raw);
+      if (Number.isInteger(n) && n >= 1) applyWorkerCount(n);
+    });
+    $('sThreads').addEventListener('change', function () {
+      if (this.readOnly) return;
+      applyWorkerCount(this.value);
+    });
     $('sRandom').addEventListener('click', function () {
       const bytes = new Uint8Array(8);
       if (window.crypto && window.crypto.getRandomValues) {
@@ -2018,8 +2077,8 @@
   function init() {
     initTheme();
     state.lang = lang();
-    state.workerCount = workerCount();
-    state.rate = INITIAL_RATE * (state.workerCount > 1 ? state.workerCount * 0.5 : 1);
+    state.workerCount = defaultWorkerCount();
+    state.rate = estimatedRateForWorkers(state.workerCount);
     state.rateList = INITIAL_RATE;
 
     $('year').textContent = String(new Date().getFullYear());
